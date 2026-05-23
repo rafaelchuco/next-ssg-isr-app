@@ -6,28 +6,16 @@ const LIST_REVALIDATE_SECONDS = 300;
 const DETAIL_REVALIDATE_SECONDS = 864000;
 
 async function fetchRickAndMorty<T>(url: string, revalidateSeconds: number): Promise<T> {
-  try {
-    const cachedResponse = await fetch(url, {
-      cache: "force-cache",
-      next: { revalidate: revalidateSeconds },
-    });
-
-    if (cachedResponse.ok) {
-      return cachedResponse.json();
-    }
-  } catch {
-    // If the cached request fails (network/transient), try a live request.
-  }
-
-  const liveResponse = await fetch(url, {
-    cache: "no-store",
+  const response = await fetch(url, {
+    cache: "force-cache",
+    next: { revalidate: revalidateSeconds },
   });
 
-  if (!liveResponse.ok) {
-    throw new Error(`Rick and Morty API request failed: ${liveResponse.status}`);
+  if (!response.ok) {
+    throw new Error(`Rick and Morty API request failed: ${response.status}`);
   }
 
-  return liveResponse.json();
+  return response.json();
 }
 
 export async function getFirstPageCharacters(): Promise<RickAndMortyCharacter[]> {
