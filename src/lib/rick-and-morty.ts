@@ -8,6 +8,7 @@ const DETAIL_REVALIDATE_SECONDS = 864000;
 async function fetchRickAndMorty<T>(url: string, revalidateSeconds: number): Promise<T> {
   try {
     const cachedResponse = await fetch(url, {
+      cache: "force-cache",
       next: { revalidate: revalidateSeconds },
     });
 
@@ -38,15 +39,15 @@ export async function getFirstPageCharacters(): Promise<RickAndMortyCharacter[]>
   }
 }
 
-export async function getAllCharacters(): Promise<RickAndMortyCharacter[]> {
+export async function getAllCharacters(revalidateSeconds = LIST_REVALIDATE_SECONDS): Promise<RickAndMortyCharacter[]> {
   try {
-    const firstPage = await fetchRickAndMorty<RickAndMortyListResponse>(RICK_AND_MORTY_API, LIST_REVALIDATE_SECONDS);
+    const firstPage = await fetchRickAndMorty<RickAndMortyListResponse>(RICK_AND_MORTY_API, revalidateSeconds);
     const characterPages = [firstPage.results];
 
     for (let pageNumber = 2; pageNumber <= firstPage.info.pages; pageNumber += 1) {
       const pageData = await fetchRickAndMorty<RickAndMortyListResponse>(
         `${RICK_AND_MORTY_API}?page=${pageNumber}`,
-        LIST_REVALIDATE_SECONDS,
+        revalidateSeconds,
       );
       characterPages.push(pageData.results);
     }
@@ -70,7 +71,7 @@ export async function getCharacter(slug: string): Promise<RickAndMortyCharacter>
     }
   }
 
-  const characters = await getAllCharacters();
+  const characters = await getAllCharacters(DETAIL_REVALIDATE_SECONDS);
   const lookupName = normalizedSlug.replace(/-/g, " ");
   const match = characters.find((character) => character.name.toLowerCase() === lookupName);
 
@@ -82,7 +83,7 @@ export async function getCharacter(slug: string): Promise<RickAndMortyCharacter>
 }
 
 export async function getStaticRickAndMortyParams() {
-  const characters = await getAllCharacters();
+  const characters = await getAllCharacters(DETAIL_REVALIDATE_SECONDS);
 
   return characters.flatMap((character) => [
     { slug: String(character.id) },

@@ -112,9 +112,15 @@ export default async function CharacterDetailPage({ params }: RickAndMortyPagePr
               <h2 className="text-lg font-bold text-white">Episodios</h2>
               <div className="mt-4 grid max-h-72 gap-2 overflow-auto pr-2 sm:grid-cols-2 xl:grid-cols-3">
                 {character.episode.map((episodeUrl, index) => (
-                  <div key={episodeUrl} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-cyan-50/80">
+                  <a
+                    key={episodeUrl}
+                    href={episodeUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-cyan-50/80 transition hover:border-cyan-300/40 hover:text-white"
+                  >
                     Episodio {index + 1}
-                  </div>
+                  </a>
                 ))}
               </div>
             </div>
