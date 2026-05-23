@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import CharacterSearch from "./character-search";
-import { getFirstPageCharacters } from "@/lib/rick-and-morty";
+import { getAllCharacters } from "@/lib/rick-and-morty";
 import { IoPlanetOutline, IoFlask, IoEye, IoGitNetwork } from "react-icons/io5";
 
 export const metadata: Metadata = {
@@ -8,8 +8,10 @@ export const metadata: Metadata = {
   description: "Listado, búsqueda y detalle de personajes de Rick and Morty",
 };
 
+export const revalidate = 300;
+
 export default async function RickAndMortyPage() {
-  const characters = await getFirstPageCharacters();
+  const characters = await getAllCharacters();
 
   return (
     <div className="py-8">

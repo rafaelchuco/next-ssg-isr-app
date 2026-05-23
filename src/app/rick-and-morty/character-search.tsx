@@ -46,6 +46,49 @@ export default function CharacterSearch({ characters }: CharacterSearchProps) {
   useEffect(() => {
     const controller = new AbortController();
 
+    const fetchAllFilteredCharacters = async (searchParams: URLSearchParams): Promise<RickAndMortyCharacter[]> => {
+      const firstResponse = await fetch(`https://rickandmortyapi.com/api/character/?${searchParams.toString()}`, {
+        signal: controller.signal,
+      });
+
+      if (!firstResponse.ok) {
+        return [];
+      }
+
+      const firstData = await firstResponse.json();
+      const firstPageResults = Array.isArray(firstData.results) ? firstData.results : [];
+      const totalPages = typeof firstData.info?.pages === "number" ? firstData.info.pages : 1;
+
+      if (totalPages <= 1) {
+        return firstPageResults;
+      }
+
+      const pageRequests: Promise<RickAndMortyCharacter[]>[] = [];
+
+      for (let page = 2; page <= totalPages; page += 1) {
+        const paramsWithPage = new URLSearchParams(searchParams);
+        paramsWithPage.set("page", String(page));
+
+        pageRequests.push(
+          fetch(`https://rickandmortyapi.com/api/character/?${paramsWithPage.toString()}`, {
+            signal: controller.signal,
+          })
+            .then(async (response) => {
+              if (!response.ok) {
+                return [];
+              }
+
+              const data = await response.json();
+              return Array.isArray(data.results) ? data.results : [];
+            })
+            .catch(() => []),
+        );
+      }
+
+      const remainingPages = await Promise.all(pageRequests);
+      return [...firstPageResults, ...remainingPages.flat()];
+    };
+
     const loadCharacters = async () => {
       const hasFilters =
         filters.name.trim().length > 0 ||
@@ -65,21 +108,12 @@ export default function CharacterSearch({ characters }: CharacterSearchProps) {
       if (filters.type.trim().length > 0) searchParams.set("type", filters.type.trim());
       if (filters.gender.length > 0) searchParams.set("gender", filters.gender);
 
-      const response = await fetch(`https://rickandmortyapi.com/api/character/?${searchParams.toString()}`, {
-        signal: controller.signal,
-      });
-
       if (controller.signal.aborted) {
         return;
       }
 
-      if (!response.ok) {
-        setFilteredCharacters([]);
-        return;
-      }
-
-      const data = await response.json();
-      setFilteredCharacters(Array.isArray(data.results) ? data.results : []);
+      const allFilteredCharacters = await fetchAllFilteredCharacters(searchParams);
+      setFilteredCharacters(allFilteredCharacters);
     };
 
     loadCharacters().catch(() => {
