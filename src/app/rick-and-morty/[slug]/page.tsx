@@ -8,7 +8,6 @@ import {
   IoEarthOutline,
   IoFilmOutline,
   IoMaleOutline,
-  IoSkullOutline,
   IoTimeOutline,
   IoLinkOutline,
 } from "react-icons/io5";
