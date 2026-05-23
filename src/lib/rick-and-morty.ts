@@ -1,49 +1,53 @@
-import { cache } from "react";
 import { notFound } from "next/navigation";
 import { RickAndMortyCharacter, RickAndMortyListResponse } from "@/types/rick-and-morty";
 
 const RICK_AND_MORTY_API = "https://rickandmortyapi.com/api/character";
+const LIST_REVALIDATE_SECONDS = 300;
+const DETAIL_REVALIDATE_SECONDS = 864000;
 
-export const getFirstPageCharacters = cache(async (): Promise<RickAndMortyCharacter[]> => {
+async function fetchRickAndMorty<T>(url: string, revalidateSeconds: number): Promise<T> {
   try {
-    const response = await fetch(RICK_AND_MORTY_API, {
-      cache: "force-cache",
+    const cachedResponse = await fetch(url, {
+      next: { revalidate: revalidateSeconds },
     });
 
-    if (!response.ok) {
-      return [];
+    if (cachedResponse.ok) {
+      return cachedResponse.json();
     }
+  } catch {
+    // If the cached request fails (network/transient), try a live request.
+  }
 
-    const data: RickAndMortyListResponse = await response.json();
+  const liveResponse = await fetch(url, {
+    cache: "no-store",
+  });
+
+  if (!liveResponse.ok) {
+    throw new Error(`Rick and Morty API request failed: ${liveResponse.status}`);
+  }
+
+  return liveResponse.json();
+}
+
+export async function getFirstPageCharacters(): Promise<RickAndMortyCharacter[]> {
+  try {
+    const data = await fetchRickAndMorty<RickAndMortyListResponse>(RICK_AND_MORTY_API, LIST_REVALIDATE_SECONDS);
     return data.results;
   } catch {
     return [];
   }
-});
+}
 
-export const getAllCharacters = cache(async (): Promise<RickAndMortyCharacter[]> => {
+export async function getAllCharacters(): Promise<RickAndMortyCharacter[]> {
   try {
-    const firstPageResponse = await fetch(RICK_AND_MORTY_API, {
-      cache: "force-cache",
-    });
-
-    if (!firstPageResponse.ok) {
-      return [];
-    }
-
-    const firstPage: RickAndMortyListResponse = await firstPageResponse.json();
+    const firstPage = await fetchRickAndMorty<RickAndMortyListResponse>(RICK_AND_MORTY_API, LIST_REVALIDATE_SECONDS);
     const characterPages = [firstPage.results];
 
     for (let pageNumber = 2; pageNumber <= firstPage.info.pages; pageNumber += 1) {
-      const pageResponse = await fetch(`${RICK_AND_MORTY_API}?page=${pageNumber}`, {
-        cache: "force-cache",
-      });
-
-      if (!pageResponse.ok) {
-        return [];
-      }
-
-      const pageData: RickAndMortyListResponse = await pageResponse.json();
+      const pageData = await fetchRickAndMorty<RickAndMortyListResponse>(
+        `${RICK_AND_MORTY_API}?page=${pageNumber}`,
+        LIST_REVALIDATE_SECONDS,
+      );
       characterPages.push(pageData.results);
     }
 
@@ -51,21 +55,16 @@ export const getAllCharacters = cache(async (): Promise<RickAndMortyCharacter[]>
   } catch {
     return [];
   }
-});
+}
 
-export const getCharacter = cache(async (slug: string): Promise<RickAndMortyCharacter> => {
+export async function getCharacter(slug: string): Promise<RickAndMortyCharacter> {
   const normalizedSlug = slug.toLowerCase();
   if (/^\d+$/.test(slug)) {
     try {
-      const response = await fetch(`${RICK_AND_MORTY_API}/${slug}`, {
-        next: { revalidate: 864000 },
-      });
-
-      if (!response.ok) {
-        notFound();
-      }
-
-      return response.json();
+      return await fetchRickAndMorty<RickAndMortyCharacter>(
+        `${RICK_AND_MORTY_API}/${slug}`,
+        DETAIL_REVALIDATE_SECONDS,
+      );
     } catch {
       notFound();
     }
@@ -80,7 +79,7 @@ export const getCharacter = cache(async (slug: string): Promise<RickAndMortyChar
   }
 
   return match;
-});
+}
 
 export async function getStaticRickAndMortyParams() {
   const characters = await getAllCharacters();

@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   description: "Listado, búsqueda y detalle de personajes de Rick and Morty",
 };
 
+export const revalidate = 300;
+
 export default async function RickAndMortyPage() {
   const characters = await getFirstPageCharacters();
 
