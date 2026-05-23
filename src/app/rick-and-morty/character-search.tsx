@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { RickAndMortyCharacter } from "@/types/rick-and-morty";
+import { IoSearchOutline, IoFilterOutline } from "react-icons/io5";
 
 interface CharacterSearchProps {
   characters: RickAndMortyCharacter[];
@@ -21,6 +22,21 @@ const initialFilters: CharacterFilters = {
   status: "",
   type: "",
   gender: "",
+};
+
+const statusStyles: Record<string, { dot: string; badge: string }> = {
+  Alive: {
+    dot: "bg-emerald-400",
+    badge: "bg-emerald-500/10 text-emerald-300 border-emerald-500/20",
+  },
+  Dead: {
+    dot: "bg-red-400",
+    badge: "bg-red-500/10 text-red-300 border-red-500/20",
+  },
+  unknown: {
+    dot: "bg-slate-400",
+    badge: "bg-slate-500/10 text-slate-300 border-slate-500/20",
+  },
 };
 
 export default function CharacterSearch({ characters }: CharacterSearchProps) {
@@ -82,117 +98,200 @@ export default function CharacterSearch({ characters }: CharacterSearchProps) {
     }));
   };
 
+  const hasActiveFilters =
+    filters.name.trim() !== "" ||
+    filters.status !== "" ||
+    filters.type.trim() !== "" ||
+    filters.gender !== "";
+
   return (
     <section className="space-y-8">
-      <div className="grid gap-4 rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm lg:grid-cols-4">
-        <label className="space-y-2 text-sm font-semibold text-cyan-50">
-          <span>Nombre</span>
-          <input
-            type="text"
-            value={filters.name}
-            onChange={(event) => handleChange("name", event.target.value)}
-            placeholder="Buscar por nombre"
-            className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white outline-none ring-0 transition placeholder:text-slate-400 focus:border-cyan-400"
-          />
-        </label>
+      {/* Filters Panel */}
+      <div className="glass-panel rounded-3xl p-6 md:p-8 shadow-2xl">
+        <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 mb-6">
+          <IoFilterOutline size={14} />
+          Filtros de búsqueda en tiempo real
+        </span>
 
-        <label className="space-y-2 text-sm font-semibold text-cyan-50">
-          <span>Status</span>
-          <select
-            value={filters.status}
-            onChange={(event) => handleChange("status", event.target.value)}
-            className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white outline-none transition focus:border-cyan-400"
-          >
-            <option value="">Todos</option>
-            <option value="Alive">Alive</option>
-            <option value="Dead">Dead</option>
-            <option value="unknown">Unknown</option>
-          </select>
-        </label>
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+          {/* Name */}
+          <div className="space-y-2">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+              Nombre
+            </label>
+            <div className="relative">
+              <div className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-slate-500">
+                <IoSearchOutline size={16} />
+              </div>
+              <input
+                type="text"
+                value={filters.name}
+                onChange={(event) => handleChange("name", event.target.value)}
+                placeholder="Buscar por nombre..."
+                className="w-full rounded-xl border border-white/10 bg-slate-950/50 py-3 pl-10 pr-4 text-sm text-white placeholder-slate-500 focus:border-cyan-500/50 focus:outline-hidden focus:ring-1 focus:ring-cyan-500/30 transition-all duration-300"
+              />
+            </div>
+          </div>
 
-        <label className="space-y-2 text-sm font-semibold text-cyan-50">
-          <span>Tipo</span>
-          <input
-            type="text"
-            value={filters.type}
-            onChange={(event) => handleChange("type", event.target.value)}
-            placeholder="Human, Alien..."
-            className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white outline-none transition placeholder:text-slate-400 focus:border-cyan-400"
-          />
-        </label>
+          {/* Status */}
+          <div className="space-y-2">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+              Status
+            </label>
+            <div className="relative">
+              <select
+                value={filters.status}
+                onChange={(event) => handleChange("status", event.target.value)}
+                className="w-full appearance-none rounded-xl border border-white/10 bg-slate-950/50 px-4 py-3 pr-10 text-sm text-white focus:border-cyan-500/50 focus:outline-hidden cursor-pointer transition-all"
+              >
+                <option value="">Todos</option>
+                <option value="Alive">🟢 Alive</option>
+                <option value="Dead">🔴 Dead</option>
+                <option value="unknown">⚪ Unknown</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          </div>
 
-        <label className="space-y-2 text-sm font-semibold text-cyan-50">
-          <span>Género</span>
-          <select
-            value={filters.gender}
-            onChange={(event) => handleChange("gender", event.target.value)}
-            className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white outline-none transition focus:border-cyan-400"
-          >
-            <option value="">Todos</option>
-            <option value="Female">Female</option>
-            <option value="Male">Male</option>
-            <option value="Genderless">Genderless</option>
-            <option value="unknown">Unknown</option>
-          </select>
-        </label>
+          {/* Species/Type */}
+          <div className="space-y-2">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+              Tipo / Especie
+            </label>
+            <input
+              type="text"
+              value={filters.type}
+              onChange={(event) => handleChange("type", event.target.value)}
+              placeholder="Human, Alien..."
+              className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-cyan-500/50 focus:outline-hidden focus:ring-1 focus:ring-cyan-500/30 transition-all"
+            />
+          </div>
+
+          {/* Gender */}
+          <div className="space-y-2">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+              Género
+            </label>
+            <div className="relative">
+              <select
+                value={filters.gender}
+                onChange={(event) => handleChange("gender", event.target.value)}
+                className="w-full appearance-none rounded-xl border border-white/10 bg-slate-950/50 px-4 py-3 pr-10 text-sm text-white focus:border-cyan-500/50 focus:outline-hidden cursor-pointer transition-all"
+              >
+                <option value="">Todos</option>
+                <option value="Female">Female</option>
+                <option value="Male">Male</option>
+                <option value="Genderless">Genderless</option>
+                <option value="unknown">Unknown</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-5 py-4 text-sm text-cyan-50">
-        <span>
-          Mostrando <strong className="text-white">{filteredCharacters.length}</strong> de{" "}
-          <strong className="text-white">{characters.length}</strong> personajes
-        </span>
-        <span className="hidden text-right text-cyan-200 sm:inline">
-          Actualización en tiempo real con <strong>useState</strong> y <strong>useEffect</strong>
-        </span>
+      {/* Results Counter */}
+      <div className="flex items-center justify-between px-2 text-sm text-slate-400">
+        <div>
+          Mostrando <span className="font-bold text-white">{filteredCharacters.length}</span> de{" "}
+          <span className="font-bold text-white">{characters.length}</span> personajes
+        </div>
+        <div className="flex items-center gap-4">
+          {hasActiveFilters && (
+            <button
+              onClick={() => setFilters(initialFilters)}
+              className="text-xs text-cyan-400 hover:text-cyan-300 transition underline decoration-dashed underline-offset-4 cursor-pointer"
+            >
+              Restablecer filtros
+            </button>
+          )}
+          <span className="hidden text-[11px] uppercase tracking-wider text-slate-500 sm:inline">
+            Tiempo real · useState + useEffect
+          </span>
+        </div>
       </div>
 
+      {/* Results Grid */}
       {filteredCharacters.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-white/15 bg-white/5 p-10 text-center text-slate-200">
-          No hay resultados con esos filtros.
+        <div className="glass-panel rounded-3xl p-16 text-center shadow-xl">
+          <p className="text-lg text-slate-400">No se encontraron personajes con estos filtros.</p>
+          <p className="mt-2 text-sm text-slate-500">Intenta con otros criterios de búsqueda.</p>
         </div>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-          {filteredCharacters.map((character) => (
-            <Link
-              key={character.id}
-              href={`/rick-and-morty/${character.id}`}
-              className="group overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-2xl transition hover:-translate-y-1 hover:border-cyan-400/40 hover:bg-white/10"
-            >
-              <div className="relative aspect-square overflow-hidden bg-slate-900/80">
-                <Image
-                  src={character.image}
-                  alt={character.name}
-                  fill
-                  sizes="(max-width: 1280px) 50vw, 25vw"
-                  className="object-cover transition duration-500 group-hover:scale-105"
-                  loading="lazy"
-                />
-              </div>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filteredCharacters.map((character) => {
+            const statusMeta = statusStyles[character.status] || statusStyles.unknown;
 
-              <div className="space-y-3 p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-xl font-bold text-white">{character.name}</h3>
-                    <p className="text-sm text-cyan-100/80">#{character.id.toString().padStart(3, "0")}</p>
+            return (
+              <Link
+                key={character.id}
+                href={`/rick-and-morty/${character.id}`}
+                className="group block"
+              >
+                <div className="glass-card overflow-hidden rounded-2xl border border-white/5 hover:border-cyan-500/30 hover:shadow-cyan-500/5 flex flex-col h-full">
+                  {/* Image */}
+                  <div className="relative aspect-square overflow-hidden bg-slate-900/80">
+                    <Image
+                      src={character.image}
+                      alt={character.name}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
+                      className="object-cover transition duration-500 group-hover:scale-110"
+                      loading="lazy"
+                    />
+                    {/* Gradient Overlay on bottom */}
+                    <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/90 to-transparent pointer-events-none" />
+
+                    {/* Status Indicator Floating */}
+                    <div className="absolute top-3 right-3 flex items-center gap-1.5 rounded-full border border-white/10 bg-slate-950/70 backdrop-blur-sm px-3 py-1">
+                      <span className={`h-2 w-2 rounded-full ${statusMeta.dot} ${character.status === "Alive" ? "animate-pulse" : ""}`} />
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-white">
+                        {character.status}
+                      </span>
+                    </div>
+
+                    {/* ID Floating Badge */}
+                    <div className="absolute bottom-3 left-3 text-[10px] font-bold text-white/60 tracking-wider">
+                      #{character.id.toString().padStart(3, "0")}
+                    </div>
                   </div>
-                  <span className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/80">
-                    {character.status}
-                  </span>
-                </div>
 
-                <div className="flex flex-wrap gap-2 text-xs text-cyan-50/90">
-                  <span className="rounded-full bg-cyan-500/15 px-3 py-1">{character.species}</span>
-                  <span className="rounded-full bg-emerald-500/15 px-3 py-1">
-                    {character.gender}
-                  </span>
-                  <span className="rounded-full bg-fuchsia-500/15 px-3 py-1">
-                    {character.type || "No type"}
-                  </span>
+                  {/* Character Info */}
+                  <div className="p-5 flex flex-col flex-1">
+                    <h3 className="text-base font-extrabold text-white tracking-tight group-hover:text-cyan-400 transition-colors truncate">
+                      {character.name}
+                    </h3>
+
+                    {/* Tags */}
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      <span className="flex items-center gap-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                        <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
+                        {character.species}
+                      </span>
+                      <span className="flex items-center gap-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                        <span className="h-1.5 w-1.5 rounded-full bg-purple-400" />
+                        {character.gender}
+                      </span>
+                      {character.type && (
+                        <span className="flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                          <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                          {character.type}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       )}
     </section>
